@@ -12,15 +12,13 @@ namespace Arheisel.REST
     public class Rest
     {
         public readonly HttpClient client;
-        public string Token { get; private set; } = string.Empty;
-        public string TokenType { get; private set; } = string.Empty;
 
-        public Rest()
+        public Rest(bool validateSSLCerts = true)
         {
-            client = new HttpClient();
-            //specify to use TLS 1.2 as default connection
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
+            var handler = new WebRequestHandler();
+            if(!validateSSLCerts) handler.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
+
+            client = new HttpClient(handler);
         }
 
         public async Task<string> PostAsync(string uri, string json)
@@ -37,9 +35,7 @@ namespace Arheisel.REST
             // Get the response.
             try
             {
-                HttpResponseMessage response = await client.PostAsync(
-                    uri,
-                    data);
+                HttpResponseMessage response = await client.PostAsync(uri, data);
 
                 // Get the response content.
                 responseContent = response.Content;
@@ -114,27 +110,6 @@ namespace Arheisel.REST
                 // Write the output.
                 return response;
             }
-        }
-
-        public static string JsonFromTemplate(string name, Dictionary<string, string> args)
-        {
-            /* BEWARE, HIGH SECURITY RISK:
-             * NEVER FEED USER INPUT INTO PATH.COMBINE
-             * As per Microsoft Docs: if an argument other than the first contains a rooted path, any previous path components are ignored, 
-             * and the returned string begins with that rooted path component.
-            */
-            var fname = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"templates\" + name + ".txt");
-
-            if (!File.Exists(fname)) throw new Exception("File " + fname + "not found.");
-
-            var json = File.ReadAllText(fname);
-
-            foreach (KeyValuePair<string, string> arg in args)
-            {
-                json = json.Replace("{{" + arg.Key + "}}", arg.Value);
-            }
-
-            return json;
         }
     }
 
