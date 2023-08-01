@@ -7,8 +7,8 @@
     <ProjectGuid>{D533B0CB-D64C-4214-8378-339B303C0D18}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>REST</RootNamespace>
-    <AssemblyName>REST</AssemblyName>
+    <RootNamespace>Arheisel.REST</RootNamespace>
+    <AssemblyName>Arheisel.REST</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
