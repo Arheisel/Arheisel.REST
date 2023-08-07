@@ -12,7 +12,6 @@ namespace Arheisel.REST
 {
     public class RestClient
     {
-        private readonly Uri _baseURL;
         private readonly HttpClient _httpClient;
 
         public RestClient(string baseURL, bool validateSSLCerts = true)
