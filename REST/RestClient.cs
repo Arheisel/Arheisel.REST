@@ -17,22 +17,20 @@ namespace Arheisel.REST
 
         public RestClient(string baseURL, bool validateSSLCerts = true)
         {
-            if (string.IsNullOrEmpty(baseURL)) _baseURL = null;
-            else _baseURL = new Uri(baseURL);
+            if (string.IsNullOrEmpty(baseURL)) throw new ArgumentNullException(nameof(baseURL));
 
-            var handler = new WebRequestHandler();
-            if (!validateSSLCerts) handler.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
+            var handler = new HttpClientHandler();
+            if (!validateSSLCerts) handler.ServerCertificateCustomValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
 
-            _httpClient = new HttpClient();
+            _httpClient = new HttpClient(handler)
+            {
+                BaseAddress = new Uri(baseURL)
+            };
         }
 
         public async Task<T> GetAsync<T>(string route)
         {
-            if (_baseURL == null) throw new NullReferenceException("BaseURL is not set");
-
-            var newUri = new Uri(_baseURL, route);
-
-            return await HandleResponse<T>(await _httpClient.GetAsync(newUri));
+            return await HandleResponse<T>(await _httpClient.GetAsync(new Uri(route, UriKind.Relative)));
         }
 
         public async Task<T> PostAsync<T>(string route, object payload)
@@ -50,10 +48,7 @@ namespace Arheisel.REST
 
         public async Task<T> PostAsync<T>(string route, HttpContent payload)
         {
-            if (_baseURL == null) throw new NullReferenceException("BaseURL is not set");
-            var newUri = new Uri(_baseURL, route);
-
-            return await HandleResponse<T>(await _httpClient.PostAsync(newUri, payload));
+            return await HandleResponse<T>(await _httpClient.PostAsync(new Uri(route, UriKind.Relative), payload));
         }
 
         private async Task<T> HandleResponse<T>(HttpResponseMessage response)
@@ -61,8 +56,8 @@ namespace Arheisel.REST
             var responseCode = (int)response.StatusCode;
             var responseText = responseCode == 204 ? null : await response.Content?.ReadAsStringAsync();
 
-            if (responseCode < 200 || responseCode >= 300) 
-                throw new RestException("Bad HTTP Code: " + responseCode, responseCode, responseText);
+            if (!response.IsSuccessStatusCode)
+                throw new RestException($"Error received ({responseCode}) from {response.RequestMessage.RequestUri}", responseCode, responseText);
 
             if (string.IsNullOrEmpty(responseText)) return default;
 
